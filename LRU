@@ -1,0 +1,138 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_FRAMES 10
+#define MAX_PAGES 100
+
+typedef struct {
+    int page;
+    int lastUsed;
+} Frame;
+
+int findLRU(Frame frames[], int frameCount) {
+    int min = frames[0].lastUsed;
+    int lruIndex = 0;
+
+    for (int i = 1; i < frameCount; i++) {
+        if (frames[i].lastUsed < min) {
+            min = frames[i].lastUsed;
+            lruIndex = i;
+        }
+    }
+
+    return lruIndex;
+}
+
+int findPage(Frame frames[], int frameCount, int page) {
+    for (int i = 0; i < frameCount; i++) {
+        if (frames[i].page == page) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+void lruPageReplacement(int pages[], int pageCount,
+                        int frameCount) {
+    Frame frames[MAX_FRAMES];
+    int currentFrames = 0;
+    int pageFaults = 0;
+    int pageHits = 0;
+
+    for (int i = 0; i < frameCount; i++) {
+        frames[i].page = -1;
+        frames[i].lastUsed = -1;
+    }
+
+    printf("\nLRU Page Replacement Simulation\n");
+    printf("================================\n");
+
+    for (int i = 0; i < pageCount; i++) {
+        int page = pages[i];
+        int index = findPage(frames, currentFrames, page);
+
+        printf("\nStep %d: Page %d -> ", i + 1, page);
+
+        if (index != -1) {
+            frames[index].lastUsed = i;
+            pageHits++;
+            printf("HIT");
+        } else {
+            pageFaults++;
+
+            if (currentFrames < frameCount) {
+                frames[currentFrames].page = page;
+                frames[currentFrames].lastUsed = i;
+                currentFrames++;
+            } else {
+                int lruIndex = findLRU(frames, currentFrames);
+
+                printf("FAULT (Replacing page %d) ",
+                       frames[lruIndex].page);
+
+                frames[lruIndex].page = page;
+                frames[lruIndex].lastUsed = i;
+            }
+
+            if (currentFrames <= frameCount) {
+                printf("FAULT");
+            }
+        }
+
+        printf(" | Frames: [");
+
+        for (int j = 0; j < currentFrames; j++) {
+            printf("%d", frames[j].page);
+
+            if (j < currentFrames - 1) {
+                printf(", ");
+            }
+        }
+
+        printf("]");
+    }
+
+    printf("\n\n================================\n");
+    printf("Total Page Faults: %d\n", pageFaults);
+    printf("Total Page Hits: %d\n", pageHits);
+    printf("Hit Ratio: %.2f%%\n",
+           (double) pageHits / pageCount * 100.0);
+    printf("Page Fault Ratio: %.2f%%\n",
+           (double) pageFaults / pageCount * 100.0);
+}
+
+int main(void) {
+    int pages[MAX_PAGES];
+    int pageCount;
+    int frameCount;
+
+    printf("LRU Page Replacement Algorithm\n");
+
+    printf("Enter number of pages (1-%d): ", MAX_PAGES);
+    if (scanf("%d", &pageCount) != 1 ||
+        pageCount < 1 || pageCount > MAX_PAGES) {
+        printf("Invalid number of pages.\n");
+        return 1;
+    }
+
+    printf("Enter the page reference string: ");
+    for (int i = 0; i < pageCount; i++) {
+        if (scanf("%d", &pages[i]) != 1 || pages[i] < 0) {
+            printf("Invalid page reference.\n");
+            return 1;
+        }
+    }
+
+    printf("Enter number of frames (1-%d): ", MAX_FRAMES);
+    if (scanf("%d", &frameCount) != 1 ||
+        frameCount < 1 || frameCount > MAX_FRAMES) {
+        printf("Invalid number of frames.\n");
+        return 1;
+    }
+
+    lruPageReplacement(pages, pageCount, frameCount);
+
+    return 0;
+}
