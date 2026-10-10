@@ -1,0 +1,136 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_REQUESTS 100
+
+void swap(int *a, int *b) {
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void sortRequests(int requests[], int n) {
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (requests[j] > requests[j + 1]) {
+                swap(&requests[j], &requests[j + 1]);
+            }
+        }
+    }
+}
+
+void clook(int requests[], int n, int head) {
+    int sorted[MAX_REQUESTS];
+    int totalSeek = 0;
+    int currentHead = head;
+    int startIndex = 0;
+
+    for (int i = 0; i < n; i++) {
+        sorted[i] = requests[i];
+    }
+
+    sortRequests(sorted, n);
+
+    /* Find first request at or above the head */
+    while (startIndex < n && sorted[startIndex] < head) {
+        startIndex++;
+    }
+
+    printf("\nC-LOOK Disk Scheduling Simulation\n");
+    printf("==================================\n");
+
+    printf("Initial Head Position: %d\n", head);
+
+    printf("Request Queue: ");
+    for (int i = 0; i < n; i++) {
+        printf("%d ", requests[i]);
+    }
+
+    printf("\n\nMovement Log:\n");
+
+    /* Service requests to the right */
+    for (int i = startIndex; i < n; i++) {
+        int distance = abs(sorted[i] - currentHead);
+
+        printf("Move from %d to %d (seek: %d)\n",
+               currentHead, sorted[i], distance);
+
+        totalSeek += distance;
+        currentHead = sorted[i];
+    }
+
+    /* Wrap around to the lowest pending request */
+    if (startIndex > 0) {
+        printf("\nWrap around to lowest pending request:\n");
+
+        for (int i = 0; i < startIndex; i++) {
+            int distance = abs(sorted[i] - currentHead);
+
+            printf("Move from %d to %d (seek: %d)\n",
+                   currentHead, sorted[i], distance);
+
+            totalSeek += distance;
+            currentHead = sorted[i];
+        }
+    }
+
+    printf("\n==================================\n");
+
+    printf("Seek Sequence: %d", head);
+
+    for (int i = startIndex; i < n; i++) {
+        printf(" -> %d", sorted[i]);
+    }
+
+    for (int i = 0; i < startIndex; i++) {
+        printf(" -> %d", sorted[i]);
+    }
+
+    printf("\nTotal Seek Distance: %d cylinders\n", totalSeek);
+    printf("Average Seek Distance: %.2f cylinders\n",
+           (double) totalSeek / n);
+}
+
+int main(void) {
+    int requests[MAX_REQUESTS];
+    int n;
+    int head;
+    int diskSize;
+
+    printf("C-LOOK Disk Scheduling Algorithm\n");
+
+    printf("Enter disk size: ");
+    if (scanf("%d", &diskSize) != 1 || diskSize < 1) {
+        printf("Invalid disk size.\n");
+        return 1;
+    }
+
+    printf("Enter number of requests (1-%d): ", MAX_REQUESTS);
+    if (scanf("%d", &n) != 1 ||
+        n < 1 || n > MAX_REQUESTS) {
+        printf("Invalid number of requests.\n");
+        return 1;
+    }
+
+    printf("Enter disk requests (0 to %d): ", diskSize - 1);
+    for (int i = 0; i < n; i++) {
+        if (scanf("%d", &requests[i]) != 1 ||
+            requests[i] < 0 || requests[i] >= diskSize) {
+            printf("Invalid disk request.\n");
+            return 1;
+        }
+    }
+
+    printf("Enter initial head position (0 to %d): ",
+           diskSize - 1);
+    if (scanf("%d", &head) != 1 ||
+        head < 0 || head >= diskSize) {
+        printf("Invalid head position.\n");
+        return 1;
+    }
+
+    clook(requests, n, head);
+
+    return 0;
+}
